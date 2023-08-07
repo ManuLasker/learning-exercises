@@ -1,0 +1,26 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-c",
+      "-fsanitize=address",
+      "-fno-common",
+      "-fno-omit-frame-pointer",
+      "-std=c99",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-Werror",
+      "-Wmissing-declarations",
+      "-DUNITY_SUPPORT_64",
+      "-DUNITY_OUTPUT_COLOR",
+      "-o",
+      "memcheck.out",
+      "test-framework/unity.c"
+    ],
+    "directory": "/home/manu-lasker26/Documents/manulasker/personal_projects/learning-exercises/exercism/c/isogram",
+    "file": "/home/manu-lasker26/Documents/manulasker/personal_projects/learning-exercises/exercism/c/isogram/test-framework/unity.c",
+    "output": "/home/manu-lasker26/Documents/manulasker/personal_projects/learning-exercises/exercism/c/isogram/memcheck.out"
+  }
+]
