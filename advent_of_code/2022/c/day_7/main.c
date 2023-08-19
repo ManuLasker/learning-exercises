@@ -16,6 +16,8 @@ typedef struct node {
 
 // const static char *file_name = "test_data.txt";
 const static char *file_name = "data.txt";
+const int total_disk_space = 70000000;
+const int total_unused_space_needed = 30000000;
 
 int is_dir(char *line) {
     if ('d' == *line) {
@@ -185,7 +187,7 @@ void inorder_free(node *root){
     }
 }
 
-void part_1() {
+void all_parts() {
     FILE *fptr = NULL;
     char line[1024];
     int debug_registry = 0;
@@ -239,15 +241,28 @@ void part_1() {
 
     //printf("\ntraversing inorder\n");
     calculate_dir_sizes(root);
+
     //traverse_inorder(root);
     int sum = 0;
     calculate_result_1(root, &sum);
     printf("results part 1 %i\n", sum);
+
+    int total_current_unused_space = total_disk_space - root->size;
+    /* for this I have an Idea:
+     * Traverse the tree and get just the directories and it's sizes
+     * Insert them in a linked list (order from lower to greater values)
+     * then iterate over the linked list and get the first directory that
+     * it's size sum with total_current_unused_space becames greater thatn
+     * total_unused_space_needed and then return that size.
+     */
+    // calculate_result_2(root, total_current_unused_space);
+
+
     printf("cleaning memory allocated...\n");
     inorder_free(root);
 }
 
 int main() {
-    part_1();
+    all_parts();
     return 0;
 }
