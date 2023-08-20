@@ -1,9 +1,18 @@
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 
 int len(char *line, char i, char f);
+
+typedef struct link_node {
+    int size;
+    char* name;
+    struct link_node *next;
+} link_node;
+
+void insert_new_linked_node(link_node* parent, int size, char *name);
 
 typedef struct node {
     bool is_dir;
@@ -187,10 +196,71 @@ void inorder_free(node *root){
     }
 }
 
+void create_dirs_list(node *root, link_node *parent){
+    if (root == NULL){
+        return;
+    }else{
+        if (root->is_dir)
+            insert_new_linked_node(parent, root->size, root->name);
+        create_dirs_list(root->child_head, parent) ;
+        create_dirs_list(root->brother, parent);
+    }
+}
+
+link_node* new_link_node(int size, link_node* next, int name_size, char* name){
+    link_node* new_node = (link_node*) malloc(sizeof(link_node));
+
+    new_node->size = size;
+    new_node->next = next;
+    new_node->name = (char*) malloc(sizeof(char) * name_size);
+
+    strcpy(new_node->name, name);
+
+    return new_node;
+}
+
+void insert_new_linked_node(link_node* parent, int size, char *name){
+    link_node *temp = parent;
+    while(temp->next){
+        temp = temp->next;
+    }
+    temp->next = new_link_node(size, NULL, len(name, '\0', '\0'), name);
+}
+
+void debug_linked_node(link_node *parent){
+    link_node *temp = parent;
+    while(temp){
+        printf("dir: %s size: %i\n", temp->name, temp->size);
+        temp = temp->next;
+    }
+}
+
+void linked_node_free(link_node *parent){
+    link_node* temp;
+    while(parent){
+        temp = parent;
+        parent = parent->next;
+        free(temp);
+    }
+}
+
+int calculate_result_2(link_node* parent, int total_current_unused_space){
+    link_node* temp = parent;
+    int result = parent->size;
+    while(temp){
+        if(temp->size + total_current_unused_space >= total_unused_space_needed){
+            if (result >= temp->size){
+                result = temp->size;
+            }
+        }
+        temp = temp->next;
+    }
+    return result;
+}
+
 void all_parts() {
     FILE *fptr = NULL;
     char line[1024];
-    int debug_registry = 0;
     int count = 0;
     node *root = NULL;
     node *child = NULL;
@@ -208,7 +278,7 @@ void all_parts() {
             if (strstr(line, "cd") != NULL) {
                 val_name = parse_cd(line);
                 if (strcmp("/", val_name) == 0){
-                    root = new_node(val_name, strlen(val_name),
+                    root = new_node(val_name, len(val_name, '\0', '\0'),
                             true, 0, NULL, NULL, NULL);
                     registry_node = &root;
                 }else if (strcmp("..", val_name) == 0){
@@ -226,11 +296,11 @@ void all_parts() {
             is_dir_val = is_dir(line);
             size = (is_dir_val) ? 0 : get_file_size(line);
             if (count == 0) {
-                child = new_node(val_name, strlen(val_name), is_dir_val, size,
+                child = new_node(val_name, len(val_name, '\0', '\0'), is_dir_val, size,
                         *(registry_node), NULL, NULL);
                 (*registry_node)->child_head = child;
             } else {
-                insert_brother(child, val_name, strlen(val_name), is_dir_val,
+                insert_brother(child, val_name, len(val_name, '\0', '\0'), is_dir_val,
                       size, *(registry_node));
             }
             count++;
@@ -241,24 +311,27 @@ void all_parts() {
 
     //printf("\ntraversing inorder\n");
     calculate_dir_sizes(root);
+    // traverse_inorder(root);
 
-    //traverse_inorder(root);
     int sum = 0;
     calculate_result_1(root, &sum);
-    printf("results part 1 %i\n", sum);
+    printf("results part 1: %i\n", sum);
 
     int total_current_unused_space = total_disk_space - root->size;
-    /* for this I have an Idea:
-     * Traverse the tree and get just the directories and it's sizes
-     * Insert them in a linked list (order from lower to greater values)
-     * then iterate over the linked list and get the first directory that
-     * it's size sum with total_current_unused_space becames greater thatn
-     * total_unused_space_needed and then return that size.
-     */
-    // calculate_result_2(root, total_current_unused_space);
+    link_node *parent = new_link_node(root->size, NULL, len(root->name, '\0', '\0'), root->name);
 
+    // printf("total_current_unused_space %i\n", total_current_unused_space);
+    // TODO: Make an order linked list instead of normal linked list
+    create_dirs_list(root, parent);
+    int result = calculate_result_2(parent, total_current_unused_space);
+
+    printf("results part 2: %i\n", result);
+
+    // printf("debugging... linked list with directories\n");
+    // debug_linked_node(parent);
 
     printf("cleaning memory allocated...\n");
+    linked_node_free(parent);
     inorder_free(root);
 }
 
